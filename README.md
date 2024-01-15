@@ -18,13 +18,13 @@ conda env create -f environment.yml
 ```sh
 python GoProTransporter.py
 ```
-
-1. Opens UI in with two directory selection buttons
-2. Select directory with GoPro files (Example: `D:\DCIM\100GOPRO`)
-3. Select the target directory in which you want to copy the files. (Example: `E:\2024_Q1_Skitrip`)
+1. Opens UI in with two directory selection buttons and proxy format options
+2. Select which proxy format you want to use (DaVinci: `Proxy/`, Adobe: `Proxies/`)
+3. Select directory with GoPro files (Example: `D:\DCIM\100GOPRO`)
+4. Select the target directory in which you want to copy the files. (Example: `E:\2024_Q1_Skitrip`)
 	- This script will create proxy files based on the `.LRV` files on the GoPro.
-4. Press **Copy**
-5. Wait until complete! (Or cancel)
+5. Press **Copy**
+6. Wait until complete! (Or cancel)
 	- Already copied files will be skipped
 
 
@@ -46,6 +46,4 @@ Then you can run script using the `GoProTransporter.exe` executable which is gen
 
 
 ### TODO's
-1. Other editing programs proxy setup.
-2. No proxy option
 3. Better styling of UI

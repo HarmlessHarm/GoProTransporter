@@ -2,8 +2,9 @@ import os
 import shutil
 import threading
 import json
-from tkinter import Tk, Button, Label, filedialog, ttk
+from tkinter import Tk, Button, Label, filedialog, ttk, IntVar, Radiobutton
 from appdirs import user_config_dir
+from enum import Enum
 
 CONFIG_DIR = user_config_dir(appname="GoProTransporter", appauthor=False)
 CONFIG_PATH = os.path.join(CONFIG_DIR, "config.json")
@@ -14,10 +15,39 @@ PROXY_EXT_TARGET = ".mov"
 MEDIA_EXTENSIONS = (".jpg", ".wav", ".mp4")
 ALL_EXTENSIONS = (*MEDIA_EXTENSIONS, PROXY_EXT_ORIGINAL, PROXY_EXT_TARGET)
 
+
+
+
+class ProxyFormat(Enum):
+    NONE = 0
+    DAVINCI = 1
+    ADOBE = 2
+    
+PROXY_FOLDER = {
+    ProxyFormat.DAVINCI.value: "Proxy",
+    ProxyFormat.ADOBE.value: "Proxies",
+}
 class FileCopyApp:
     def __init__(self, master):
         self.master = master
         master.title("File Copy App")
+
+        self.proxy_format_label = Label(master, text="Select Proxy Format:")
+        self.proxy_format_label.pack()
+
+        # Variable to store the selected proxy format
+        self.selected_proxy_format = IntVar()
+
+        # Radio buttons for proxy format selection
+        self.radio_none = Radiobutton(master, text="None", variable=self.selected_proxy_format, value=ProxyFormat.NONE.value)
+        self.radio_none.pack()
+
+        self.radio_davinci = Radiobutton(master, text="DaVinci style", variable=self.selected_proxy_format, value=ProxyFormat.DAVINCI.value)
+        self.radio_davinci.pack()
+
+        self.radio_adobe = Radiobutton(master, text="Adobe style", variable=self.selected_proxy_format, value=ProxyFormat.ADOBE.value)
+        self.radio_adobe.pack()
+
 
         self.source_label = Label(master, text="Source Directory:")
         self.source_label.pack()
@@ -60,6 +90,8 @@ class FileCopyApp:
 
     def cancel_copy(self):
         self.cancel_flag = True
+        self.toggle_button(self.cancel_button, False)
+        self.toggle_button(self.close_button, True)
 
     def close_app(self):
         # Save selected folders to the configuration file before closing (optional)
@@ -102,7 +134,7 @@ class FileCopyApp:
         self.progress_bar["maximum"] = total_files
         self.progress_bar["value"] = 0
 
-        proxy_subfolder = os.path.join(self.destination_path, "proxies")
+        proxy_subfolder = os.path.join(self.destination_path, PROXY_FOLDER[self.selected_proxy_format.get()])
         if not os.path.exists(proxy_subfolder):
             os.makedirs(proxy_subfolder)
 
@@ -127,32 +159,40 @@ class FileCopyApp:
                     return
 
                 file_size = os.path.getsize(source_path)/float(1<<20)
+                skip = False
 
                 if filename.lower().endswith(MEDIA_EXTENSIONS):
                     destination_path = os.path.join(self.destination_path, filename)
 
-                elif filename.lower().endswith(PROXY_EXT_ORIGINAL):
+                # If file ends with .LRV and proxies need to be transported.
+                elif filename.lower().endswith(PROXY_EXT_ORIGINAL) and self.selected_proxy_format.get() != ProxyFormat.NONE.value:
                     new_filename = filename.lower().replace("gl", "gx").replace(PROXY_EXT_ORIGINAL, PROXY_EXT_TARGET).upper()
                     destination_path = os.path.join(proxy_subfolder, new_filename)
 
-                if os.path.exists(destination_path):
+                # If not know media extension or no proxy: skip file
+                else:
+                    skip = True
+                    
+                # Skip if already exists in target
+                if skip or os.path.exists(destination_path):
                     self.progress_bar["value"] += 1
                     counts["skipped"] += 1
                     self.progress_label.config(text=f"Skipping file {filename} (already exists)")
                     self.master.update()
                     continue
 
-                
+                # Update progressbar description, copy file, update progressbar progress.
                 self.progress_label.config(text=f"Copying file {filename} {f'>{new_filename}' if new_filename else ''} [{file_size:.2f} MB]")
                 shutil.copy2(source_path, destination_path)
                 self.progress_bar["value"] += 1
                 counts["copied"] += 1
                 self.master.update()
 
-        # self.progress_bar["value"] = 0
         self.progress_label.config(text=f"Copy operation complete.\n Copied {counts['copied']} files.\n Skipped {counts['skipped']} files.")
 
+        # Show close button
         self.toggle_button(self.cancel_button, False)
+        self.toggle_button(self.copy_button, True)
         self.toggle_button(self.close_button, True)
 
     def save_config(self):
@@ -160,7 +200,11 @@ class FileCopyApp:
         if not os.path.exists(CONFIG_DIR):
             os.makedirs(CONFIG_DIR)
 
-        config_data = {"SourcePath": self.source_path, "DestinationPath": self.destination_path}
+        config_data = {
+            "SourcePath": self.source_path, 
+            "DestinationPath": self.destination_path,
+            "SelectedProxyFormat": self.selected_proxy_format.get()
+        }
 
         with open(CONFIG_PATH, "w") as config_file:
             json.dump(config_data, config_file)
@@ -172,6 +216,17 @@ class FileCopyApp:
                 config_data = json.load(config_file)
                 self.source_path = config_data.get("SourcePath", "")
                 self.destination_path = config_data.get("DestinationPath", "")
+
+                # Load selected proxy format from the configuration file
+                selected_format = config_data.get("SelectedProxyFormat", ProxyFormat.NONE.value)
+                self.selected_proxy_format.set(selected_format)
+                # Update the radio buttons based on the loaded value
+                if selected_format == ProxyFormat.NONE.value:
+                    self.radio_none.select()
+                elif selected_format == ProxyFormat.DAVINCI.value:
+                    self.radio_davinci.select()
+                elif selected_format == ProxyFormat.ADOBE.value:
+                    self.radio_adobe.select()
 
                 self.source_label.config(text=f"Source Directory: {self.source_path}")
                 self.destination_label.config(text=f"Destination Directory: {self.destination_path}")
