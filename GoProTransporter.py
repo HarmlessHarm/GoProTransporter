@@ -119,6 +119,7 @@ class FileCopyApp:
         for filename in os.listdir(self.source_path):
             source_path = os.path.join(self.source_path, filename)
 
+            new_filename = None
             # Check if it's a file and meets the criteria for copying
             if os.path.isfile(source_path):
                 if self.cancel_flag:
@@ -131,7 +132,7 @@ class FileCopyApp:
                     destination_path = os.path.join(self.destination_path, filename)
 
                 elif filename.lower().endswith(PROXY_EXT_ORIGINAL):
-                    new_filename = filename.replace("GL", "GX").replace(PROXY_EXT_ORIGINAL.upper(), PROXY_EXT_TARGET)
+                    new_filename = filename.lower().replace("gl", "gx").replace(PROXY_EXT_ORIGINAL, PROXY_EXT_TARGET).upper()
                     destination_path = os.path.join(proxy_subfolder, new_filename)
 
                 if os.path.exists(destination_path):
@@ -142,7 +143,7 @@ class FileCopyApp:
                     continue
 
                 
-                self.progress_label.config(text=f"Copying file {filename} [{file_size:.2f} MB]")
+                self.progress_label.config(text=f"Copying file {filename} {f'>{new_filename}' if new_filename else ''} [{file_size:.2f} MB]")
                 shutil.copy2(source_path, destination_path)
                 self.progress_bar["value"] += 1
                 counts["copied"] += 1
