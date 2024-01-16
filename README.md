@@ -1,4 +1,6 @@
-# GoProTransporter
+# GoPro File Transporter
+
+![GoPro File Transporter GUI](static/gui.png)
 
 ### Installation
 

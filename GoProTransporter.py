@@ -30,7 +30,7 @@ PROXY_FOLDER = {
 class FileCopyApp:
     def __init__(self, master):
         self.master = master
-        master.title("File Copy App")
+        master.title("GoPro File Transporter")
 
         self.proxy_format_label = Label(master, text="Select Proxy Format:")
         self.proxy_format_label.pack()
