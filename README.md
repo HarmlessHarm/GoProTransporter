@@ -1,4 +1,6 @@
-# GoPro File Transporter
+# <img src="static/GoProTransfererIcon.ico" width="40" height="40" style="margin-bottom: -8"> GoPro File Transporter
+
+
 
 ![GoPro File Transporter GUI](static/gui.png)
 
